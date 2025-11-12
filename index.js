@@ -103,15 +103,49 @@ async function run() {
       res.json(result);
     });
 
+    //get my models
+
+    app.get('/mymodels', async (req, res) => {
+      try {
+        const email = req.query.email;
+
+        if (!email) {
+          return res
+            .status(400)
+            .send({ message: 'Email query parameter is required.' });
+        }
+
+        const result = await modelsCollection
+          .find({ createdBy: email })
+          .toArray();
+
+        res.status(200).send(result);
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        res
+          .status(500)
+          .send({ message: 'Failed to fetch models', error: error.message });
+      }
+    });
+
     // update models data
 
-    app.patch('/update-model/:id', async (req, res) => {
+    app.put('/update-model/:id', async (req, res) => {
       const id = req.params.id;
       const updatedModel = req.body;
       const query = { _id: new ObjectId(id) };
       const update = { $set: updatedModel };
 
       const result = await modelsCollection.updateOne(query, update);
+      res.send(result);
+    });
+
+    // delete one model API
+
+    app.delete('/models/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await modelsCollection.deleteOne(query);
       res.send(result);
     });
 
