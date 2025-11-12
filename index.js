@@ -34,23 +34,48 @@ async function run() {
 
     // Post User API
     app.post('/models', async (req, res) => {
-      const newUser = req.body;
+      try {
+        const newModel = req.body;
 
-      const email = req.body.email;
-      const query = { email: email };
-      const existingUser = await usersCollection.findOne(query);
-      if (existingUser) {
-        res.send('user alrady exits. do not need to insert again');
-      } else {
-        const result = await modelsCollection.insertOne(newUser);
+        const query = { name: newModel.name };
+        const existing = await modelsCollection.findOne(query);
+
+        if (existing) {
+          return res.send({ message: 'Model already exists' });
+        }
+
+        const result = await modelsCollection.insertOne(newModel);
         res.send(result);
+      } catch (error) {
+        console.error('Error adding model:', error);
+        res.status(500).send({ message: 'Failed to add model' });
       }
     });
+
+    // grt modeldetails
+    app.get('/modeldetails/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await modelsCollection.findOne(query);
+
+        if (!result) {
+          return res.status(404).send({ message: 'Model not found' });
+        }
+
+        res.send(result);
+      } catch (error) {
+        console.error('Error fetching model:', error);
+        res.status(500).send({ message: 'Failed to fetch model' });
+      }
+    });
+
     // get all user
     app.get('/models', async (req, res) => {
       const result = await modelsCollection.find().toArray();
       res.send(result);
     });
+
     // most recent models
     app.get('/latest-models', async (req, res) => {
       const result = await modelsCollection
@@ -59,6 +84,23 @@ async function run() {
         .limit(6)
         .toArray();
       res.send(result);
+    });
+
+    // get one models API
+    app.get('/modeldetails/:id', async (req, res) => {
+      const id = req.params.id;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: 'Invalid product ID' });
+      }
+
+      const query = { _id: id };
+      console.log(id);
+      console.log(query);
+
+      const result = await modelsCollection.findOne(query);
+      console.log('result for server', result);
+      res.json(result);
     });
 
     await client.db('admin').command({ ping: 1 });
