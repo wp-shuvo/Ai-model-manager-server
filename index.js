@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db('AiModelsManager');
     const modelsCollection = db.collection('models');
@@ -195,7 +195,16 @@ async function run() {
       res.send(result);
     });
 
-    await client.db('admin').command({ ping: 1 });
+    //search api
+    app.get('/search', async (req, res) => {
+      const search = req.query.search;
+      const result = await modelsCollection
+        .find({ name: { $regex: search, $options: 'i' } })
+        .toArray();
+      res.send(result);
+    });
+
+    // await client.db('admin').command({ ping: 1 });
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!'
     );
