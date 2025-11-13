@@ -150,6 +150,7 @@ async function run() {
     // purchasedModels APIs ===>>
 
     //purchasedModels Post API
+
     app.post('/purchasedModels', async (req, res) => {
       const data = req.body;
 
@@ -166,6 +167,23 @@ async function run() {
 
       const result = await purchaseModelCollection.insertOne(data);
       res.status(201).send(result);
+    });
+
+    // purchasedModels Post
+    app.get('/myModelPurchase', async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res
+          .status(400)
+          .send({ message: 'Email query parameter is required.' });
+      }
+
+      const result = await purchaseModelCollection
+        .find({ buyerEmail: email })
+        .toArray();
+
+      res.status(200).send(result);
     });
 
     //
