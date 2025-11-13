@@ -29,6 +29,7 @@ async function run() {
 
     const db = client.db('AiModelsManager');
     const modelsCollection = db.collection('models');
+    const purchaseModelCollection = db.collection('purchasedModels');
 
     // Models API
 
@@ -121,10 +122,7 @@ async function run() {
 
         res.status(200).send(result);
       } catch (error) {
-        console.error('Error fetching models:', error);
-        res
-          .status(500)
-          .send({ message: 'Failed to fetch models', error: error.message });
+        console.error('Error my models:', error);
       }
     });
 
@@ -146,6 +144,36 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await modelsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // purchasedModels APIs ===>>
+
+    //purchasedModels Post API
+    app.post('/purchasedModels', async (req, res) => {
+      const data = req.body;
+
+      const existingPurchase = await purchaseModelCollection.findOne({
+        modelId: data.modelId,
+        buyerEmail: data.buyerEmail,
+      });
+
+      if (existingPurchase) {
+        return res
+          .status(409)
+          .send({ message: 'Model already purchased by this user' });
+      }
+
+      const result = await purchaseModelCollection.insertOne(data);
+      res.status(201).send(result);
+    });
+
+    //
+    app.patch('/models/:id/purchase', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = { $inc: { purchaseCount: 1 } };
+      const result = await modelsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
